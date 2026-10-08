@@ -15,29 +15,28 @@
 
 import argparse
 import os
+import random
+import statistics
 import sys
+import textwrap
+from operator import itemgetter
 from pathlib import Path
+from random import randint
+from typing import Dict, Iterator, List
+
+import matplotlib
+import matplotlib.pyplot as plt
+import networkx as nx
 from networkx import (
     DiGraph,
     all_simple_paths,
-    lowest_common_ancestor,
     has_path,
-    random_layout,
-    draw,
-    spring_layout,
+    lowest_common_ancestor,
 )
-import matplotlib
-from operator import itemgetter
-import random
-
-random.seed(9001)
-from random import randint
-import statistics
-import textwrap
-import matplotlib.pyplot as plt
-from typing import Iterator, Dict, List
 
 matplotlib.use("Agg")
+
+random.seed(9001)
 
 __author__ = "Your Name"
 __copyright__ = "Universite Paris Diderot"
@@ -121,34 +120,26 @@ def cut_kmer(read: str, kmer_size: int) -> Iterator[str]:
 
 
 def build_kmer_dict(fastq_file: Path, kmer_size: int) -> Dict[str, int]:
-    """Build a dictionnary object of all kmer occurrences in the fastq file
-
-    :param fastq_file: (str) Path to the fastq file.
-    :return: A dictionnary object that identify all kmer occurrences.
-    """
+    """Build a dictionnary object of all kmer occurrences."""
     kmer_dict = {}
-    
+
     for read in read_fastq(fastq_file):
-    	for kmer in cut_kmer(read, kmer_size):
-    		kmer_dict[kmer] = kmer_dict.get(kmer, 0) + 1
-    
+        for kmer in cut_kmer(read, kmer_size):
+            kmer_dict[kmer] = kmer_dict.get(kmer, 0) + 1
+
     return kmer_dict
 
 
 def build_graph(kmer_dict: Dict[str, int]) -> DiGraph:
-    """Build the debruijn graph
-
-    :param kmer_dict: A dictionnary object that identify all kmer occurrences.
-    :return: A directed graph (nx) of all kmer substring and weight (occurrence).
-    """
+    """Build the debruijn graph."""
     graph = DiGraph()
-    for kmer, count in kmer_dict.items():
-    	prefix = kmer[:-1]
-    	suffix = kmer[1:]
-    	graph.add_edge(prefix, suffix, weight=count)
-    
-    return graph
 
+    for kmer, count in kmer_dict.items():
+        prefix = kmer[:-1]
+        suffix = kmer[1:]
+        graph.add_edge(prefix, suffix, weight=count)
+
+    return graph
 
 def remove_paths(
     graph: DiGraph,
@@ -180,6 +171,7 @@ def remove_paths(
     return graph
 
 
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def select_best_path(
     graph: DiGraph,
     path_list: List[List[str]],
