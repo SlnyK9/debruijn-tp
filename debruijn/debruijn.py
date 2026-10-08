@@ -110,7 +110,6 @@ def read_fastq(fastq_file: Path) -> Iterator[str]:
                 return
 
 
-
 def cut_kmer(read: str, kmer_size: int) -> Iterator[str]:
     """Cut read into kmers of size kmer_size.
 
@@ -248,7 +247,7 @@ def get_starting_nodes(graph: DiGraph) -> List[str]:
     :param graph: (nx.DiGraph) A directed graph object
     :return: (list) A list of all nodes without predecessors
     """
-    pass
+    return [node for node in graph.nodes if graph.in_degree(node) == 0]
 
 
 def get_sink_nodes(graph: DiGraph) -> List[str]:
@@ -257,7 +256,7 @@ def get_sink_nodes(graph: DiGraph) -> List[str]:
     :param graph: (nx.DiGraph) A directed graph object
     :return: (list) A list of all nodes without successors
     """
-    pass
+    return [node for node in graph.nodes if graph.out_degree(node) == 0]
 
 
 def get_contigs(
@@ -270,16 +269,26 @@ def get_contigs(
     :param ending_nodes: (list) A list of nodes without successors
     :return: (list) List of [contiguous sequence and their length]
     """
-    pass
+    contigs = []
+    for start in starting_nodes:
+        for end in ending_nodes:
+            for path in all_simple_paths(graph, start, end):
+                contig = path[0]
+                for node in path[1:]:
+                    contig += node[-1]
+                contigs.append((contig, len(contig)))
 
-
+    return contigs
+    
 def save_contigs(contigs_list: List[str], output_file: Path) -> None:
     """Write all contigs in fasta format
-
     :param contig_list: (list) List of [contiguous sequence and their length]
     :param output_file: (Path) Path to the output file
     """
-    pass
+    with open(output_file, "w", encoding="utf-8") as output:
+        for index, (contig, length) in enumerate(contigs_list):
+            output.write(f">contig_{index} len={length}\n")
+            output.write(textwrap.fill(contig, width=80) + "\n")
 
 
 def draw_graph(graph: DiGraph, graphimg_file: Path) -> None:  # pragma: no cover
