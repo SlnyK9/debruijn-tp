@@ -418,20 +418,26 @@ def draw_graph(graph: DiGraph, graphimg_file: Path) -> None:  # pragma: no cover
 # ==============================================================
 # Main program
 # ==============================================================
-def main() -> None:  # pragma: no cover
-    """
-    Main program function
-    """
-    # Get arguments
+def main():
+    """Main function."""
     args = get_arguments()
 
-    # Fonctions de dessin du graphe
-    # A decommenter si vous souhaitez visualiser un petit
-    # graphe
-    # Plot the graph
-    # if args.graphimg_file:
-    #     draw_graph(graph, args.graphimg_file)
+    kmer_dict = build_kmer_dict(args.fastq_file, args.kmer_size)
+    graph = build_graph(kmer_dict)
 
+    graph = simplify_bubbles(graph)
+
+    starting_nodes = get_starting_nodes(graph)
+    graph = solve_entry_tips(graph, starting_nodes)
+
+    ending_nodes = get_sink_nodes(graph)
+    graph = solve_out_tips(graph, ending_nodes)
+
+    starting_nodes = get_starting_nodes(graph)
+    ending_nodes = get_sink_nodes(graph)
+
+    contigs = get_contigs(graph, starting_nodes, ending_nodes)
+    save_contigs(contigs, args.output_file)
 
 if __name__ == "__main__":  # pragma: no cover
     main()
