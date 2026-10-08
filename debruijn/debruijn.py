@@ -97,12 +97,18 @@ def get_arguments():  # pragma: no cover
 
 
 def read_fastq(fastq_file: Path) -> Iterator[str]:
-    """Extract reads from fastq files.
+    """Extract reads from fastq files."""
+    with open(fastq_file, "r", encoding="utf-8") as fastq:
+        while True:
+            try:
+                next(fastq)
+                sequence = next(fastq).strip()
+                next(fastq)
+                next(fastq)
+                yield sequence
+            except StopIteration:
+                return
 
-    :param fastq_file: (Path) Path to the fastq file.
-    :return: A generator object that iterate the read sequences.
-    """
-    pass
 
 
 def cut_kmer(read: str, kmer_size: int) -> Iterator[str]:
@@ -111,7 +117,8 @@ def cut_kmer(read: str, kmer_size: int) -> Iterator[str]:
     :param read: (str) Sequence of a read.
     :return: A generator object that provides the kmers (str) of size kmer_size.
     """
-    pass
+    for i in range(len(read) - kmer_size + 1):
+    	yield read[i:i + kmer_size]
 
 
 def build_kmer_dict(fastq_file: Path, kmer_size: int) -> Dict[str, int]:
@@ -120,7 +127,13 @@ def build_kmer_dict(fastq_file: Path, kmer_size: int) -> Dict[str, int]:
     :param fastq_file: (str) Path to the fastq file.
     :return: A dictionnary object that identify all kmer occurrences.
     """
-    pass
+    kmer_dict = {}
+    
+    for read in read_fastq(fastq_file):
+    	for kmer in cut_kmer(read, kmer_size):
+    		kmer_dict[kmer] = kmer_dict.get(kmer, 0) + 1
+    
+    return kmer_dict
 
 
 def build_graph(kmer_dict: Dict[str, int]) -> DiGraph:
@@ -129,7 +142,13 @@ def build_graph(kmer_dict: Dict[str, int]) -> DiGraph:
     :param kmer_dict: A dictionnary object that identify all kmer occurrences.
     :return: A directed graph (nx) of all kmer substring and weight (occurrence).
     """
-    pass
+    graph = DiGraph()
+    for kmer, count in kmer_dict.items():
+    	prefix = kmer[:-1]
+    	suffix = kmer[1:]
+    	graph.add_edge(prefix, suffix, weight=count)
+    
+    return graph
 
 
 def remove_paths(
